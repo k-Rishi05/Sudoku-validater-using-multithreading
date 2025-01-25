@@ -192,7 +192,7 @@ void chunk_Method(){
         info[i].thread_number = i+1;
         info[i].start = (i-number_of_row_threads)*col_chunk_size;
         if(i<number_of_col_threads-1)
-            info[i].end = (i+1)*col_chunk_size;
+            info[i].end = (i-number_of_row_threads+1)*col_chunk_size;
         else    
             info[i].end  = n;
         
@@ -207,7 +207,7 @@ void chunk_Method(){
         info[i].thread_number = i+1;
         info[i].start = (i-number_of_row_threads-number_of_col_threads)*sub_grid_chunk_size;
         if(i<k-1)
-            info[i].end = (i+1)*sub_grid_chunk_size;
+            info[i].end = (i-number_of_row_threads-number_of_col_threads+1)*sub_grid_chunk_size;
         else    
             info[i].end  = n;
         
@@ -256,7 +256,7 @@ void Sequential_Method(){
 }
 
 int main(){
-    char *filename = "input.txt";
+    char *filename = "36x36_sudoku.txt";
 
     //Reading input from sudoku_input.txt
     read_Input_From_File(filename);
@@ -272,8 +272,8 @@ int main(){
     printf("The total Time taken is %.2f microseconds\n", (end - start));
 
     flag = 1; // Reset flag for sequential method
-    // start = clock();
-    // Sequential_Method();
-    // end = clock();
-    //printf("Time taken by Sequential_Method: %.2f ms\n", 1000.0 * (double)(end - start) / CLOCKS_PER_SEC);
+    start = get_time_in_microseconds();
+    Sequential_Method();
+    end = get_time_in_microseconds();
+    printf("The total Time taken in Sequential is %.2f microseconds\n", (end - start));
 }
