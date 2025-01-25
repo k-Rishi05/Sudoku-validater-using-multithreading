@@ -4,10 +4,11 @@
 #include <string.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include <time.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 typedef struct{
+    int thread_number;
     int start;
     int end;
     int type;   //  0 - for row, 1 - for column, 2 - for sub_grid
@@ -17,6 +18,12 @@ int n,k;
 int **sudoku;
 int flag = 1; //For implementing early termination
 
+
+double get_time_in_microseconds() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1e6 + tv.tv_usec; // Convert to floating-point microseconds
+}
 
 void read_Input_From_File(const char *filename){
     FILE *file = fopen(filename,"r");
@@ -109,19 +116,39 @@ bool check_Sub_grid(int start_row,int start_col,int grid_size){
 void *validate(void *args){
     Thread_info *info = (Thread_info*)args;
     int grid_size = (int)sqrt(n);
-
+    double thread_start, thread_end;
     // if(flag==0)
     //     return NULL;
     for(int i=info->start;i<info->end;i++){
         bool valid = false;
-        if(info->type == 0)
+        if(info->type == 0){
+            thread_start = get_time_in_microseconds();
             valid=check_Row(i);
-        else if(info->type == 1)
+            thread_end = get_time_in_microseconds();
+            if(valid)
+                printf("Thread %d checks Row %d and is Valid : %.2f ms\n",info->thread_number,i+1,(thread_end - thread_start));
+            else
+                printf("Thread %d checks Row %d and is Valid : %.2f ms\n", info->thread_number,i+1,(thread_end - thread_start));
+        }
+        else if(info->type == 1){
+            thread_start = get_time_in_microseconds();
             valid=check_Column(i);
+            thread_end = get_time_in_microseconds();
+            if(valid)
+                printf("Thread %d checks Column %d and is Valid : %.2f ms\n",info->thread_number,i+1,(thread_end - thread_start));
+            else
+                printf("Thread %d checks Column %d and is Valid : %.2f ms\n", info->thread_number,i+1,(thread_end - thread_start));
+        }
         else if(info->type ==2){
             int start_row = (i/grid_size)*grid_size;
             int start_col = (i%grid_size)*grid_size;
-            valid = check_Sub_grid(start_row,start_col,grid_size);
+            thread_start = get_time_in_microseconds();
+            valid=check_Sub_grid(start_row,start_col,grid_size);
+            thread_end = get_time_in_microseconds();
+            if(valid)
+                printf("Thread %d checks Grid-Size %d and is Valid : %.2f ms\n",info->thread_number,i+1,(thread_end - thread_start));
+            else
+                printf("Thread %d checks Grid-Size %d and is Valid : %.2f ms\n", info->thread_number,i+1,(thread_end - thread_start));
         }
 
         if(!valid)
@@ -147,8 +174,9 @@ void chunk_Method(){
     //Row Checking
 
     for(int i=0;i<number_of_row_threads;i++){
+        info[i].thread_number = i+1;
         info[i].start = i*row_chunk_size;
-        if(i<k-1)
+        if(i<number_of_row_threads-1)
             info[i].end = (i+1)*row_chunk_size;
         else    
             info[i].end  = n;
@@ -160,9 +188,10 @@ void chunk_Method(){
 
     //Column Checking
 
-    for(int i=0;i<number_of_col_threads;i++){
-        info[i].start = i*col_chunk_size;
-        if(i<k-1)
+    for(int i=number_of_row_threads;i<number_of_row_threads+number_of_col_threads;i++){
+        info[i].thread_number = i+1;
+        info[i].start = (i-number_of_row_threads)*col_chunk_size;
+        if(i<number_of_col_threads-1)
             info[i].end = (i+1)*col_chunk_size;
         else    
             info[i].end  = n;
@@ -174,8 +203,9 @@ void chunk_Method(){
 
     //Sub_grid checking
 
-    for(int i=0;i<number_of_sub_grid_threads;i++){
-        info[i].start = i*sub_grid_chunk_size;
+    for(int i=number_of_row_threads+number_of_col_threads;i<k;i++){
+        info[i].thread_number = i+1;
+        info[i].start = (i-number_of_row_threads-number_of_col_threads)*sub_grid_chunk_size;
         if(i<k-1)
             info[i].end = (i+1)*sub_grid_chunk_size;
         else    
@@ -191,9 +221,9 @@ void chunk_Method(){
 
 
     if(flag)
-        printf("Is a Valid Sudoku\n");
+        printf("\nSudoku is valid\n");
     else
-        printf("Not a Valid Sudoku\n");
+        printf("\nSudoku is invalid\n");
 }
 
 void Sequential_Method(){
@@ -226,7 +256,7 @@ void Sequential_Method(){
 }
 
 int main(){
-    char *filename = "64x64_sudoku.txt";
+    char *filename = "input.txt";
 
     //Reading input from sudoku_input.txt
     read_Input_From_File(filename);
@@ -234,16 +264,16 @@ int main(){
     printf("Number of threads: %d\n",k);
     printf("Sudoku grid size: %d x %d\n",n,n);
     //print_Sudoku(sudoku,n);
-    clock_t start, end;
+    double start, end;
 
-    start = clock();
+    start = get_time_in_microseconds();
     chunk_Method();
-    end = clock();
-    printf("Time taken by chunk_Method: %.2f ms\n", 1000.0 * (double)(end - start) / CLOCKS_PER_SEC);
+    end = get_time_in_microseconds();
+    printf("The total Time taken is %.2f microseconds\n", (end - start));
 
     flag = 1; // Reset flag for sequential method
-    start = clock();
-    Sequential_Method();
-    end = clock();
-    printf("Time taken by Sequential_Method: %.2f ms\n", 1000.0 * (double)(end - start) / CLOCKS_PER_SEC);
+    // start = clock();
+    // Sequential_Method();
+    // end = clock();
+    //printf("Time taken by Sequential_Method: %.2f ms\n", 1000.0 * (double)(end - start) / CLOCKS_PER_SEC);
 }
