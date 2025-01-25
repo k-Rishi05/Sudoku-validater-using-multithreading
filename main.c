@@ -136,15 +136,20 @@ void *validate(void *args){
 void chunk_Method(){
     pthread_t threads[k];
     Thread_info info[k];
-    int chunk_size = n/k;
+    int number_of_row_threads = k/3;
+    int number_of_col_threads = k/3;
+    int number_of_sub_grid_threads = k-2*(int)(k/3);
+    int row_chunk_size = n/number_of_row_threads;
+    int col_chunk_size = n/number_of_col_threads;
+    int sub_grid_chunk_size  = n/number_of_sub_grid_threads;
     int grid_chunks = n/((int)sqrt(n));
 
     //Row Checking
 
-    for(int i=0;i<k;i++){
-        info[i].start = i*chunk_size;
+    for(int i=0;i<number_of_row_threads;i++){
+        info[i].start = i*row_chunk_size;
         if(i<k-1)
-            info[i].end = (i+1)*chunk_size;
+            info[i].end = (i+1)*row_chunk_size;
         else    
             info[i].end  = n;
         
@@ -152,16 +157,13 @@ void chunk_Method(){
 
         pthread_create(&threads[i],NULL,validate,&info[i]);
     }
-    for(int i=0;i<k;i++){
-        pthread_join(threads[i],NULL);
-    }
 
     //Column Checking
 
-    for(int i=0;i<k;i++){
-        info[i].start = i*chunk_size;
+    for(int i=0;i<number_of_col_threads;i++){
+        info[i].start = i*col_chunk_size;
         if(i<k-1)
-            info[i].end = (i+1)*chunk_size;
+            info[i].end = (i+1)*col_chunk_size;
         else    
             info[i].end  = n;
         
@@ -169,16 +171,13 @@ void chunk_Method(){
 
         pthread_create(&threads[i],NULL,validate,&info[i]);
     }
-    for(int i=0;i<k;i++){
-        pthread_join(threads[i],NULL);
-    }
 
     //Sub_grid checking
 
-    for(int i=0;i<k;i++){
-        info[i].start = i*chunk_size;
+    for(int i=0;i<number_of_sub_grid_threads;i++){
+        info[i].start = i*sub_grid_chunk_size;
         if(i<k-1)
-            info[i].end = (i+1)*chunk_size;
+            info[i].end = (i+1)*sub_grid_chunk_size;
         else    
             info[i].end  = n;
         
@@ -227,14 +226,24 @@ void Sequential_Method(){
 }
 
 int main(){
-    char *filename = "input.txt";
+    char *filename = "64x64_sudoku.txt";
 
     //Reading input from sudoku_input.txt
     read_Input_From_File(filename);
 
     printf("Number of threads: %d\n",k);
     printf("Sudoku grid size: %d x %d\n",n,n);
-    print_Sudoku(sudoku,n);
+    //print_Sudoku(sudoku,n);
+    clock_t start, end;
+
+    start = clock();
     chunk_Method();
+    end = clock();
+    printf("Time taken by chunk_Method: %.2f ms\n", 1000.0 * (double)(end - start) / CLOCKS_PER_SEC);
+
+    flag = 1; // Reset flag for sequential method
+    start = clock();
     Sequential_Method();
+    end = clock();
+    printf("Time taken by Sequential_Method: %.2f ms\n", 1000.0 * (double)(end - start) / CLOCKS_PER_SEC);
 }
