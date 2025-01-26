@@ -18,6 +18,7 @@ int n,k;
 int **sudoku;
 int flag = 1; //For implementing early termination
 
+FILE* output_file;
 
 double get_time_in_microseconds() {
     struct timeval tv;
@@ -116,39 +117,32 @@ bool check_Sub_grid(int start_row,int start_col,int grid_size){
 void *validate(void *args){
     Thread_info *info = (Thread_info*)args;
     int grid_size = (int)sqrt(n);
-    double thread_start, thread_end;
     // if(flag==0)
     //     return NULL;
     for(int i=info->start;i<info->end;i++){
         bool valid = false;
         if(info->type == 0){
-            thread_start = get_time_in_microseconds();
             valid=check_Row(i);
-            thread_end = get_time_in_microseconds();
             if(valid)
-                printf("Thread %d checks Row %d and is Valid : %.2f ms\n",info->thread_number,i+1,(thread_end - thread_start));
+                fprintf(output_file,"Thread %d checks Row %d and is Valid\n",info->thread_number,i+1);
             else
-                printf("Thread %d checks Row %d and is Valid : %.2f ms\n", info->thread_number,i+1,(thread_end - thread_start));
+                fprintf(output_file,"Thread %d checks Row %d and is Invalid \n", info->thread_number,i+1);
         }
         else if(info->type == 1){
-            thread_start = get_time_in_microseconds();
             valid=check_Column(i);
-            thread_end = get_time_in_microseconds();
             if(valid)
-                printf("Thread %d checks Column %d and is Valid : %.2f ms\n",info->thread_number,i+1,(thread_end - thread_start));
+                fprintf(output_file,"Thread %d checks Column %d and is Valid\n",info->thread_number,i+1);
             else
-                printf("Thread %d checks Column %d and is Valid : %.2f ms\n", info->thread_number,i+1,(thread_end - thread_start));
+                fprintf(output_file,"Thread %d checks Column %d and is Invalid\n", info->thread_number,i+1);
         }
         else if(info->type ==2){
             int start_row = (i/grid_size)*grid_size;
             int start_col = (i%grid_size)*grid_size;
-            thread_start = get_time_in_microseconds();
             valid=check_Sub_grid(start_row,start_col,grid_size);
-            thread_end = get_time_in_microseconds();
             if(valid)
-                printf("Thread %d checks Grid-Size %d and is Valid : %.2f ms\n",info->thread_number,i+1,(thread_end - thread_start));
+                fprintf(output_file,"Thread %d checks grid %d and is Valid\n",info->thread_number,i+1);
             else
-                printf("Thread %d checks Grid-Size %d and is Valid : %.2f ms\n", info->thread_number,i+1,(thread_end - thread_start));
+                fprintf(output_file,"Thread %d checks grid %d and is Invalid\n", info->thread_number,i+1);
         }
 
         if(!valid)
@@ -191,7 +185,7 @@ void chunk_Method(){
     for(int i=number_of_row_threads;i<number_of_row_threads+number_of_col_threads;i++){
         info[i].thread_number = i+1;
         info[i].start = (i-number_of_row_threads)*col_chunk_size;
-        if(i<number_of_col_threads-1)
+        if(i<number_of_row_threads+number_of_col_threads-1)
             info[i].end = (i-number_of_row_threads+1)*col_chunk_size;
         else    
             info[i].end  = n;
@@ -221,9 +215,9 @@ void chunk_Method(){
 
 
     if(flag)
-        printf("\nSudoku is valid\n");
+        fprintf(output_file,"\nSudoku is valid\n");
     else
-        printf("\nSudoku is invalid\n");
+        fprintf(output_file,"\nSudoku is invalid\n");
 }
 
 void Sequential_Method(){
@@ -250,30 +244,36 @@ void Sequential_Method(){
         
     }
     if(flag)
-        printf("Is a Valid Sudoku\n");
+        fprintf(output_file,"\nSudoku is valid\n");
     else
-        printf("Not a Valid Sudoku\n");
+        fprintf(output_file,"\nSudoku is invalid\n");
 }
 
 int main(){
+    output_file = fopen("output.txt", "w");
+    if (output_file == NULL) {
+        printf("Failed to open output file.\n");
+        return EXIT_FAILURE;
+    }
+
     char *filename = "36x36_sudoku.txt";
 
     //Reading input from sudoku_input.txt
     read_Input_From_File(filename);
 
-    printf("Number of threads: %d\n",k);
-    printf("Sudoku grid size: %d x %d\n",n,n);
+    // fprintf(output_file,"Number of threads: %d\n",k);
+    // fprintf(output_file,"Sudoku grid size: %d x %d\n",n,n);
     //print_Sudoku(sudoku,n);
     double start, end;
 
     start = get_time_in_microseconds();
     chunk_Method();
     end = get_time_in_microseconds();
-    printf("The total Time taken is %.2f microseconds\n", (end - start));
+    fprintf(output_file,"The total Time taken is %.2f microseconds\n", (end - start));
 
-    flag = 1; // Reset flag for sequential method
-    start = get_time_in_microseconds();
-    Sequential_Method();
-    end = get_time_in_microseconds();
-    printf("The total Time taken in Sequential is %.2f microseconds\n", (end - start));
+    // flag = 1; // Reset flag for sequential method
+    // start = get_time_in_microseconds();
+    // Sequential_Method();
+    // end = get_time_in_microseconds();
+    // fprintf(output_file,"The total Time taken in Sequential is %.2f microseconds\n", (end - start));
 }
