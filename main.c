@@ -256,7 +256,7 @@ int main(){
         return EXIT_FAILURE;
     }
 
-    char *filename = "36x36_sudoku.txt";
+    char *filename = "input49.txt";
 
     //Reading input from sudoku_input.txt
     read_Input_From_File(filename);
