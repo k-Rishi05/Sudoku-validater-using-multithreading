@@ -68,51 +68,51 @@ void print_Sudoku(int **grid,int n){
 
 bool check_Row(int row){
     int *hash= calloc(n,sizeof(int));
-
+    bool valid=true;
     for(int i=0;i<n;i++){
         int num= sudoku[row][i];
         if(num<1 || num>n || hash[num-1]==1){
             free(hash);
-            return false;
+            valid= false;
         }
         hash[num-1]=1;
     }
     free(hash);
-    return true;
+    return valid;
 
 }
 
 bool check_Column(int col){
     int *hash= calloc(n,sizeof(int));
-
+    bool valid= true;
     for(int i=0;i<n;i++){
         int num= sudoku[i][col];
         if(num<1 || num>n || hash[num-1]==1){
             free(hash);
-            return false;
+            valid= false;
         }
         hash[num-1]=1;
     }
     free(hash);
-    return true;
+    return valid;
 
 }
 
 bool check_Sub_grid(int start_row,int start_col,int grid_size){
     int *hash= calloc(n,sizeof(int));
-
+    bool valid = true;
     for(int i=start_row;i<start_row+grid_size;i++){
         for(int j=start_col;j<start_col+grid_size;j++){
             int num= sudoku[i][j];
             if(num<1 || num>n || hash[num-1]==1){
                 free(hash);
-                return false;
+                valid= false;
         }
         hash[num-1]=1;
         }
     }
     free(hash);
-    return true;
+    return valid;
 }
 
 void *validate_chunk(void *args){
@@ -360,6 +360,7 @@ int main(int argc, const char *argv[]){
     output_file_chunk = fopen("output_chunk.txt", "w");
     output_file_mixed = fopen("output_mixed.txt", "w");
     time_record = fopen("time_record.txt", "w");
+    fprintf(time_record,"Mixed_time  Chunk_Time  Sequential_Time\n");
     if (output_file_chunk == NULL) {
         printf("Failed to open output file.\n");
         return EXIT_FAILURE;
@@ -380,14 +381,14 @@ int main(int argc, const char *argv[]){
     mixed_Method();
     end = get_time_in_microseconds();
     fprintf(output_file_mixed,"The total Time taken is %.2f microseconds\n\n", (end - start));
-    fprintf(time_record,"%.2f ",(end - start));
+    fprintf(time_record,"%.2f \t\t",(end - start));
 
     flag=1;
     start = get_time_in_microseconds();
     chunk_Method();
     end = get_time_in_microseconds();
     fprintf(output_file_chunk,"The total Time taken is %.2f microseconds\n", (end - start));
-    fprintf(time_record,"%.2f ",(end - start));
+    fprintf(time_record,"%.2f \t\t ",(end - start));
 
     flag = 1; // Reset flag for sequential method
     start = get_time_in_microseconds();
