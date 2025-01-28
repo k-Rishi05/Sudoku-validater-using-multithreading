@@ -159,9 +159,12 @@ void *validate_mixed(void* args){
     int grid_size = (int)sqrt(n);
     // if(flag==0)
     //     return NULL;
+    int number_of_row_threads = k/3;
+    int number_of_col_threads = (k - number_of_row_threads)/2;
+    int number_of_sub_grid_threads = k - number_of_col_threads - number_of_row_threads;
 
     if(info->type==0){
-        for(int i=info->start;i<n;i=i+(int)k/3){
+        for(int i=info->start;i<n;i=i+number_of_row_threads){
             bool valid = false;
             valid=check_Row(i);
             if(valid)
@@ -175,7 +178,7 @@ void *validate_mixed(void* args){
     }
 
     else if(info->type==1){
-        for(int i=info->start;i<n;i=i+(int)k/3){
+        for(int i=info->start;i<n;i=i+number_of_col_threads){
             bool valid = false;
             valid=check_Column(i);
             if(valid)
@@ -189,7 +192,7 @@ void *validate_mixed(void* args){
     }
 
     else if(info->type==2){
-        for(int i=info->start;i<n;i=i+(k-2*(int)k/3)){
+        for(int i=info->start;i<n;i=i+number_of_sub_grid_threads){
             bool valid = false;
             int start_row = (i/grid_size)*grid_size;
             int start_col = (i%grid_size)*grid_size;
@@ -211,8 +214,8 @@ void chunk_Method(){
     pthread_t threads[k];
     Thread_info info[k];
     int number_of_row_threads = k/3;
-    int number_of_col_threads = k/3;
-    int number_of_sub_grid_threads = k-2*(int)(k/3);
+    int number_of_col_threads = (k - number_of_row_threads)/2;
+    int number_of_sub_grid_threads = k - number_of_col_threads - number_of_row_threads;
     int row_chunk_size = n/number_of_row_threads;
     int col_chunk_size = n/number_of_col_threads;
     int sub_grid_chunk_size  = n/number_of_sub_grid_threads;
@@ -306,8 +309,8 @@ void mixed_Method(){
     pthread_t threads[k];
     Thread_info info[k];
     int number_of_row_threads = k/3;
-    int number_of_col_threads = k/3;
-    int number_of_sub_grid_threads = k-2*(int)(k/3);
+    int number_of_col_threads = (k - number_of_row_threads)/2;
+    int number_of_sub_grid_threads = k - number_of_col_threads - number_of_row_threads;
     int row_chunk_size = n/number_of_row_threads;
     int col_chunk_size = n/number_of_col_threads;
     int sub_grid_chunk_size  = n/number_of_sub_grid_threads;
