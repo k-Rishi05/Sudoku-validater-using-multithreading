@@ -72,7 +72,6 @@ bool check_Row(int row){
     for(int i=0;i<n;i++){
         int num= sudoku[row][i];
         if(num<1 || num>n || hash[num-1]==1){
-            free(hash);
             valid= false;
         }
         hash[num-1]=1;
@@ -88,7 +87,6 @@ bool check_Column(int col){
     for(int i=0;i<n;i++){
         int num= sudoku[i][col];
         if(num<1 || num>n || hash[num-1]==1){
-            free(hash);
             valid= false;
         }
         hash[num-1]=1;
@@ -105,7 +103,6 @@ bool check_Sub_grid(int start_row,int start_col,int grid_size){
         for(int j=start_col;j<start_col+grid_size;j++){
             int num= sudoku[i][j];
             if(num<1 || num>n || hash[num-1]==1){
-                free(hash);
                 valid= false;
         }
         hash[num-1]=1;
@@ -121,6 +118,12 @@ void *validate_chunk(void *args){
     // if(flag==0)
     //     return NULL;
     for(int i=info->start;i<info->end;i++){
+
+        //******** EARLY TERMINATION ************
+        // if(flag==0)
+        //     return NULL;
+        //******** EARLY TERMINATION ************
+
         bool valid = false;
         if(info->type == 0){
             valid=check_Row(i);
@@ -165,6 +168,12 @@ void *validate_mixed(void* args){
 
     if(info->type==0){
         for(int i=info->start;i<n;i=i+number_of_row_threads){
+
+            //******** EARLY TERMINATION ************
+            // if(flag==0)
+                // return NULL;
+            //******** EARLY TERMINATION ************
+
             bool valid = false;
             valid=check_Row(i);
             if(valid)
@@ -179,6 +188,12 @@ void *validate_mixed(void* args){
 
     else if(info->type==1){
         for(int i=info->start;i<n;i=i+number_of_col_threads){
+
+            //******** EARLY TERMINATION ************
+            // if(flag==0)
+            //     return NULL;
+            //******** EARLY TERMINATION ************
+
             bool valid = false;
             valid=check_Column(i);
             if(valid)
@@ -193,6 +208,12 @@ void *validate_mixed(void* args){
 
     else if(info->type==2){
         for(int i=info->start;i<n;i=i+number_of_sub_grid_threads){
+
+            //******** EARLY TERMINATION ************
+            // if(flag==0)
+            //     return NULL;
+            //******** EARLY TERMINATION ************
+
             bool valid = false;
             int start_row = (i/grid_size)*grid_size;
             int start_col = (i%grid_size)*grid_size;
@@ -395,5 +416,13 @@ int main(int argc, const char *argv[]){
     Sequential_Method();
     end = get_time_in_microseconds();
     fprintf(time_record,"%.2f ", (end - start));
+
+    for(int i = 0; i < n; i++) {
+        free(sudoku[i]);
+    }
+    free(sudoku);
+    fclose(output_file_chunk);
+    fclose(output_file_mixed);
+    fclose(time_record);
 
 }
