@@ -1,2 +1,2 @@
 Mixed_time  Chunk_Time  Sequential_Time
-249.00 		201.00 		 37.00 
+8083.00 		7580.00 		 27565.00 
